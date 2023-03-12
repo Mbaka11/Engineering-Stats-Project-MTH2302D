@@ -1,0 +1,592 @@
+---
+title: "Devoir A2022"
+author: "Marsel Bakashov"
+date: "`r format(Sys.time(), '%d %b %Y')`"
+output:
+  word_document: default
+  html_notebook: default
+  pdf_document: default
+lang: fr
+---
+```{r setup, message = FALSE}
+library(dplyr)
+library(knitr)
+library(ggplot2)
+library(gtsummary)
+
+opts_chunk$set(
+  fig.width = 6,
+  fig.height = 4,
+  fig.align = 'center'
+)
+
+reset_gtsummary_theme()
+```
+
+```{r}
+# Fonction pour calculer le coefficient de variation.
+cv <- function(x) {
+  return(sd(x) / mean(x))
+}
+
+# Fonction pour calculer l'écart interquartile.
+iqr <- function(x) {
+  return(quantile(x, .75) - quantile(x, .25))
+}
+
+# Fonction pour calculer l'erreur type
+se <- function(x) {
+  return(sd(x)/sqrt(length(x)))
+}
+```
+
+```{r}
+source('charger.R')
+mondata<-charger(2147174)
+mondata
+```
+#Phase 1 : Analyse statistique descriptive et inference
+
+a) (2 points) Examinez les liens entre les variables quantitatives de l’étude. Pour cela, produisez une matrice des corrélations pour l’ensemble des trois variables quantitatives et commentez brièvement
+```{r}
+mcor <- cor(mondata[,1:3])
+round(mcor,2)
+```
+
+b) (8 points) Pour chacune des trois variables Y (l’efficacité en carburant), X1 (la cylindrée) et X2 (le poids), produisez
+les graphiques et les tableaux demandés ci-dessous et interprétez brièvement les résultats dans chaque cas :
+• un histogramme et un diagramme de Tukey (ou «Box Plot») ;
+```{r}
+mondata%>%
+  ggplot(aes(x=mpg)) + 
+  geom_histogram(
+    col = "red",
+    fill = "green",
+    bins = 10
+  ) +
+  labs(x='L’efficacité en carburant du véhicule (en milles par gallon)
+', y ='Frequence') +
+  ggtitle('Histogramme de l’efficacité en carburant du véhicule') +
+  theme(plot.title = element_text(hjust = 0.5))
+
+mondata%>%
+  ggplot(aes(x=displacement)) + 
+  geom_histogram(
+    col = "red",
+    fill = "green",
+    bins = 10
+  ) +
+  labs(x='La cylindrée du moteur du véhicule (en pouces cubes)
+', y ='Frequence') +
+  ggtitle('Histogramme de la cylindrée du moteur du véhicule') +
+  theme(plot.title = element_text(hjust = 0.5))
+
+mondata%>%
+  ggplot(aes(x=weight)) + 
+  geom_histogram(
+    col = "red",
+    fill = "green",
+    bins = 10
+  ) +
+  labs(x='Le poids du véhicule (en livres)
+', y ='Frequence') +
+  ggtitle('Histogramme du poids du véhicule') +
+  theme(plot.title = element_text(hjust = 0.5))
+
+mondata%>%
+  ggplot(aes(x=mpg)) +
+  geom_boxplot(
+    color = 'blue',
+    fill = 'red',
+    alpha = 0.5,
+    width = 0.2,
+    outlier.color = 'black',
+    outlier.fill = 'black',
+    outlier.alpha = 1,
+    outlier.size = 4
+  ) + 
+ylim(-0.5, 0.5) + 
+labs(x='L’efficacité en carburant du véhicule') +
+theme(
+  axis.ticks.y = element_blank(),
+  axis.text.y = element_blank()
+)
+
+mondata%>%
+  ggplot(aes(x=displacement)) +
+  geom_boxplot(
+    color = 'blue',
+    fill = 'red',
+    alpha = 0.5,
+    width = 0.2,
+    outlier.color = 'black',
+    outlier.fill = 'black',
+    outlier.alpha = 1,
+    outlier.size = 4
+  ) + 
+ylim(-0.5, 0.5) + 
+labs(x='La cylindrée du moteur du véhicule') +
+theme(
+  axis.ticks.y = element_blank(),
+  axis.text.y = element_blank()
+)
+
+mondata%>%
+  ggplot(aes(x=weight)) +
+  geom_boxplot(
+    color = 'blue',
+    fill = 'red',
+    alpha = 0.5,
+    width = 0.2,
+    outlier.color = 'black',
+    outlier.fill = 'black',
+    outlier.alpha = 1,
+    outlier.size = 4
+  ) + 
+ylim(-0.5, 0.5) + 
+labs(x='Le poids du véhicule') +
+theme(
+  axis.ticks.y = element_blank(),
+  axis.text.y = element_blank()
+)
+
+```
+• une droite de Henry (ou «Normal Probability Plot») et un test de normalité (Shapiro-Wilk) ;
+```{r}
+mondata%>%
+  ggplot(aes(sample=mpg)) +
+  stat_qq(
+    alpha = 0.5,
+    size = 1.2
+  ) +
+  stat_qq_line(
+    color = 'red'
+  )+
+  labs(x='Normal Scores
+', y ='Standardized Residuals') +
+  ggtitle('Droite de Henry de l’efficacité en carburant du véhicule') +
+  theme(plot.title = element_text(hjust = 0.5))
+
+mondata%>%
+  ggplot(aes(sample=displacement)) +
+  stat_qq(
+    alpha = 0.5,
+    size = 1.2
+  ) +
+  stat_qq_line(
+    color = 'red'
+  )+
+  labs(x='Normal Scores
+', y ='Standardized Residuals') +
+  ggtitle('Droite de Henry de la cylindrée du moteur du véhicule
+') +
+  theme(plot.title = element_text(hjust = 0.5))
+
+mondata%>%
+  ggplot(aes(sample=weight)) +
+  stat_qq(
+    alpha = 0.5,
+    size = 1.2
+  ) +
+  stat_qq_line(
+    color = 'red'
+  )+
+  labs(x='Normal Scores
+', y ='Standardized Residuals') +
+  ggtitle('Droite de Henry du poids du véhicule 
+') +
+  theme(plot.title = element_text(hjust = 0.5))
+
+    
+shapiro.test(mondata$mpg)
+shapiro.test(mondata$displacement)
+shapiro.test(mondata$weight)
+```
+• un tableau de statistiques descriptives comprenant : moyenne, quartiles, écart type, erreur type, intervalle de confiance pour la moyenne ;
+```{r}
+mondata%>%
+  tbl_summary(
+    include = mpg,
+    label = mpg ~ "mpg",
+    type = mpg ~ "continuous2",
+    statistic = mpg ~ c(
+      "{mean}",
+      "{sd}",
+      "{se}",
+      "{min}",
+      "{max}",
+      "{p25}",
+      "{median}",
+      "{p75}"
+      )
+    )-> mpg.stats.table
+
+mpg.stats.table %>%
+  add_stat_label(
+    label = mpg ~ c(
+      "Moyenne",
+      "Écart-type",
+      "Erreur type",
+      "Minimum",
+      "Maximum",
+      "Premier quartile",
+      "Médiane",
+      "Troisième quartile"
+    )
+  ) -> mpg.stats.table
+
+mpg.stats.table %>%
+  modify_header(
+    label ~ "**Statistiques descriptives**",
+    all_stat_cols() ~ ""
+  ) -> mpg.stats.table
+
+mpg.stats.table %>%
+  bold_labels() %>% 
+  italicize_levels() -> mpg.stats.table
+
+mpg.stats.table %>%
+  add_ci()
+
+mondata%>%
+  tbl_summary(
+    include = displacement,
+    label = displacement ~ "displacement",
+    type = displacement ~ "continuous2",
+    statistic = displacement ~ c(
+      "{mean}",
+      "{sd}",
+      "{se}",
+      "{min}",
+      "{max}",
+      "{p25}",
+      "{median}",
+      "{p75}"
+      )
+    )-> displacement.stats.table
+
+displacement.stats.table %>%
+  add_stat_label(
+    label = displacement ~ c(
+      "Moyenne",
+      "Écart-type",
+      "Erreur type",
+      "Minimum",
+      "Maximum",
+      "Premier quartile",
+      "Médiane",
+      "Troisième quartile"
+    )
+  ) -> displacement.stats.table
+
+displacement.stats.table %>%
+  modify_header(
+    label ~ "**Statistiques descriptives**",
+    all_stat_cols() ~ ""
+  ) -> displacement.stats.table
+
+displacement.stats.table %>%
+  bold_labels() %>% 
+  italicize_levels() -> displacement.stats.table
+
+displacement.stats.table %>%
+  add_ci()
+
+mondata%>%
+  tbl_summary(
+    include = weight,
+    label = weight ~ "weight",
+    type = weight ~ "continuous2",
+    statistic = weight ~ c(
+      "{mean}",
+      "{sd}",
+      "{se}",
+      "{min}",
+      "{max}",
+      "{p25}",
+      "{median}",
+      "{p75}"
+      )
+    )-> weight.stats.table
+
+weight.stats.table %>%
+  add_stat_label(
+    label = weight ~ c(
+      "Moyenne",
+      "Écart-type",
+      "Erreur type",
+      "Minimum",
+      "Maximum",
+      "Premier quartile",
+      "Médiane",
+      "Troisième quartile"
+    )
+  ) -> weight.stats.table
+
+weight.stats.table %>%
+  modify_header(
+    label ~ "**Statistiques descriptives**",
+    all_stat_cols() ~ ""
+  ) -> weight.stats.table
+
+weight.stats.table %>%
+  bold_labels() %>% 
+  italicize_levels() -> weight.stats.table
+
+weight.stats.table %>%
+  add_ci()
+  
+```
+
+
+c) (8 points) Afin de vérifier si l’efficacité en carburant d’un véhicule dépend de l’origine de celui-ci, on peut considérer deux groupes de données selon la variable origin et effectuer une comparaison des deux groupes en termes de moyenne,symétrie et variabilité. Pour ce faire, effectuez les analyses suivantes et donnez une brève conclusion :
+
+• deux histogrammes juxtaposés, et deux diagrammes de Tukey (ou «Box Plot») juxtaposés ;
+```{r}
+origin.labeller <- function(n) {
+  return(paste("Origin", n))
+}
+
+mondata%>%
+  filter(origin %in% c(0,1))%>%
+  ggplot(aes(x=mpg)) + 
+  geom_histogram(
+    col = "red",
+    fill = "green",
+    bins = 10
+  ) +
+  facet_wrap(
+    ~factor(origin),
+    labeller = as_labeller(origin.labeller)
+  )+
+  labs(x='L’efficacité en carburant du véhicule (en milles par gallon)', y ='Frequence') +
+  ggtitle('L’efficacité en carburant du véhicule en fonction de leur origine') +
+  theme(plot.title = element_text(hjust = 0.5))
+
+mondata%>%
+  ggplot(aes(x=mpg, fill=origin)) +
+  geom_boxplot(
+    alpha = 0.5,
+    width = 0.2
+  ) +
+  facet_wrap(
+    ~origin, nrow=1
+  )+
+  ylim(-0.5, 0.5) + 
+  labs(x='L’efficacité en carburant du véhicule') +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks.x = element_blank()
+)
+```
+• un tableau des statistiques descriptives par groupe : moyenne, quartiles, variance, écart type, intervalle de confiance pour la moyenne ;
+```{r}
+mondata%>%
+  tbl_summary(
+    include = mpg,
+    by = origin,
+    label = mpg ~ "mpg",
+    type = mpg ~ "continuous2",
+    statistic = mpg ~ c(
+      "{mean}",
+      "{var}",
+      "{sd}",
+      "{min}",
+      "{max}",
+      "{p25}",
+      "{median}",
+      "{p75}"
+      )
+    )-> mpg.stats.table
+
+mpg.stats.table %>%
+  add_stat_label(
+    label = mpg ~ c(
+      "Moyenne",
+      "Variance",
+      "Écart-type",
+      "Minimum",
+      "Maximum",
+      "Premier quartile",
+      "Médiane",
+      "Troisième quartile"
+    )
+  ) -> mpg.stats.table
+
+mpg.stats.table %>%
+  modify_header(label ~ "**Statistiques descriptives**") %>%
+  modify_header(all_stat_cols() ~ "*{level}*"
+)-> mpg.stats.table
+
+mpg.stats.table %>%
+  bold_labels() %>% 
+  italicize_levels() -> mpg.stats.table
+
+mpg.stats.table %>%
+  add_ci()
+```
+• un test d’hypothèses sur l’égalité des variances des deux groupes ;
+```{r}
+var.test(mpg ~ origin, data=mondata, alternative = "two.sided")
+```
+• un test d’hypothèses sur l’égalité des moyennes des deux groupes.
+```{r}
+t.test(mpg ~ origin, data=mondata, alternative = "two.sided")
+```
+#Phase 2 : Recherche d’un modèle
+On s’intéresse dans cette phase à la détermination d’un modèle permettant d’expliquer la performance d’un véhicule en
+fonction des différentes variables de l’étude. Pour ce faire, on envisage des modèles de régression en considérant l’efficacité en carburant comme variable dépendante, Y .
+d) (15 points) On considère les huit modèles suivants :
+Pour chacun des huit modèles ci-dessus :
+
+• (5 points) Effectuez l’ajustement (i.e. obtenir le tableau des coefficients de régression, le tableau d’analyse de la variance).
+```{r}
+Y <- mondata$mpg
+X1 <- mondata$displacement
+X2 <- mondata$weight
+X3 <- mondata$origin
+
+linModel1 <- lm(Y ~ X1)
+summary(linModel1)
+linModel1$coefficients
+anova(linModel1)
+```
+
+```{r}
+linModel2 <- lm(Y ~ X1^2)
+summary(linModel2)
+linModel2$coefficients
+anova(linModel2)
+```
+
+```{r}
+linModel3 <- lm(log(Y) ~log(X1) )
+summary(linModel3)
+linModel3$coefficients
+anova(linModel3)
+```
+
+```{r}
+linModel4 <- lm(log(Y) ~X1)
+summary(linModel4)
+linModel4$coefficients
+anova(linModel4)
+```
+
+```{r}
+linModel5 <- lm(Y ~ X2)
+summary(linModel5)
+linModel5$coefficients
+anova(linModel5)
+```
+
+```{r}
+linModel6 <- lm(Y ~ X2^2)
+summary(linModel6)
+linModel6$coefficients
+anova(linModel6)
+```
+
+```{r}
+linModel7 <- lm(log(mondata$mpg) ~ log(mondata$weight) )
+summary(linModel7)
+linModel7$coefficients
+anova(linModel7)
+```
+
+```{r}
+linModel8 <- lm(log(Y) ~ X2)
+summary(linModel8)
+linModel8$coefficients
+anova(linModel8)
+```
+
+
+
+
+• (5 points) Tester la signification du modèle et effectuez une analyse des résidus (normalité, homoscédasticité,
+points atypiques, etc.)
+```{r}
+par(mfrow = c(2,2))
+plot(linModel1)
+shapiro.test(rstudent(linModel1))
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(linModel2)
+shapiro.test(rstudent(linModel2))
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(linModel3)
+shapiro.test(rstudent(linModel3))
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(linModel4)
+shapiro.test(rstudent(linModel4))
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(linModel5)
+shapiro.test(rstudent(linModel5))
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(linModel6)
+shapiro.test(rstudent(linModel6))
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(linModel7)
+shapiro.test(residuals(linModel7))
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(linModel8)
+shapiro.test(residuals(linModel8))
+```
+
+
+• (3 points) Donner un intervalle de confiance pour chacun des paramètres β0 et β1 des modèles 1 et 5.
+```{r}
+confint(linModel1)
+```
+
+```{r}
+confint(linModel5)
+```
+
+• (2 points) En conclusion : effectuez une comparaison
+```{r}
+
+```
+e) (5 points) Sur la base du meilleur modèle que vous avez obtenu en d), calculez un intervalle de prévision pour
+l’efficacité en carburant d’un véhicule ayant les caractéristiques suivantes : X1 = 190; X2 = 2500.
+Commentez brièvement votre résultat.
+Remarque. Notez que le modèle que vous avez obtenu en d) n’utilise pas nécessairement toutes les valeurs ci-dessus
+```{r}
+predict(linModel8, newdata = data.frame(X1 = 190, X2 = 2500), interval = "predict", level = 0.95)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
